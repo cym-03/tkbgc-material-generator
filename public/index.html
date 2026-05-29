@@ -199,7 +199,7 @@
     <div class="config-card">
       <label>图片输出目录</label>
       <div class="input-row">
-        <input type="text" id="outputDir" value="C:\Users\YANXUN\Pictures" placeholder="输出目录（请使用纯英文路径）">
+        <input type="text" id="outputDir" value="" placeholder="留空使用默认目录，或输入路径（请使用纯英文路径）">
         <button class="btn-sm" id="btnPickFolder" onclick="pickFolder()">选择文件夹</button>
       </div>
       <div style="font-size:11px;color:#c9973a;margin-top:4px;" id="folderHint">请使用纯英文路径，中文路径会导致生成失败</div>
@@ -395,9 +395,9 @@ function resetAll() {
     document.getElementById('sceneToggle'+i).checked = true;
     document.getElementById('sceneCard'+i).classList.add('active');
   });
-  document.getElementById('refImage').value = 'C:\\Users\\YANXUN\\Pictures\\tk_video (20).png';
+  document.getElementById('refImage').value = '';
   document.getElementById('refFileUpload').value = '';
-  document.getElementById('outputDir').value = 'C:\\Users\\YANXUN\\Pictures';
+  document.getElementById('outputDir').value = '';
   loadDefaultPreview();
 }
 

@@ -227,13 +227,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Multer for file upload
-const uploadDir = path.join(require('os').homedir(), 'Pictures', 'tkbgc-refs');
+const uploadDir = path.join(__dirname, 'uploads');
+const outputDefault = path.join(__dirname, 'outputs');
 fs.mkdirSync(uploadDir, { recursive: true });
+fs.mkdirSync(outputDefault, { recursive: true });
 const multer = require('multer');
 const upload = multer({ dest: uploadDir, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Helper: run PowerShell script via Base64-encoded command (avoids escaping issues)
+// Only works on Windows; returns null on other platforms
 function runPowerShellDialog(script) {
+  if (process.platform !== 'win32') return null;
   const utf16le = Buffer.from(script, 'utf16le');
   const base64 = utf16le.toString('base64');
   return require('child_process').execSync(
@@ -257,6 +261,7 @@ app.post('/api/upload-ref', upload.single('file'), (req, res) => {
 
 // POST /api/pick-file — native file open dialog via PowerShell (Base64-encoded, no escaping issues)
 app.post('/api/pick-file', (req, res) => {
+  if (process.platform !== 'win32') return res.status(400).json({ error: 'Native file dialog only works on Windows. Use the "上传" button instead.' });
   try {
     const script = [
       'Add-Type -AssemblyName System.Windows.Forms',
@@ -275,6 +280,7 @@ app.post('/api/pick-file', (req, res) => {
 
 // POST /api/pick-folder — native folder browser dialog via PowerShell (Base64-encoded)
 app.post('/api/pick-folder', (req, res) => {
+  if (process.platform !== 'win32') return res.status(400).json({ error: 'Native folder dialog only works on Windows. Please type the path manually.' });
   try {
     const script = [
       'Add-Type -AssemblyName System.Windows.Forms',
@@ -339,7 +345,7 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'scenes array is required' });
     }
 
-    const outputDir = userOutputDir || path.join(require('os').homedir(), 'Pictures');
+    const outputDir = userOutputDir || path.join(__dirname, 'outputs');
     const jobId = `job-${Date.now()}`;
     const tasks = [];
 
@@ -440,8 +446,8 @@ app.get('/api/jobs', (req, res) => {
 // GET /api/defaults - Return default scene configs
 app.get('/api/defaults', (req, res) => {
   res.json({
-    referenceImage: 'C:\\Users\\YANXUN\\Pictures\\tk_video (20).png',
-    outputDir: path.join(require('os').homedir(), 'Pictures'),
+    referenceImage: '',
+    outputDir: outputDefault,
     promptTemplate: PROMPT_TEMPLATE,
     negativePrompt: NEGATIVE_PROMPT,
     scenes: Object.entries(SCENE_BACKGROUNDS).map(([name, bg]) => ({

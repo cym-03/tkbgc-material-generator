@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: tkbgc-material-generator
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: CREATOK_API_KEY
+        sync: false
+      - key: FEISHU_APP_ID
+        sync: false
+      - key: FEISHU_APP_SECRET
+        sync: false
+      - key: FEISHU_BITABLE_APP_TOKEN
+        sync: false
+      - key: FEISHU_BITABLE_TABLE_ID
+        sync: false
