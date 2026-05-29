@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TKBGC素材生成</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f0eb;
+    color: #2c2416;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 20px 32px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
+  .header .badge { background: #e2b96f; color: #1a1a2e; padding: 3px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  .section-title {
+    font-size: 14px; font-weight: 600; color: #6b5e4a; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before { content: ''; display: block; width: 4px; height: 16px; background: #e2b96f; border-radius: 2px; }
+
+  /* Config row */
+  .config-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .config-row { grid-template-columns: 1fr; } }
+  .config-card {
+    background: #fff; border-radius: 10px; padding: 16px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e8e1d7;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .config-card label { font-size: 13px; font-weight: 600; color: #6b5e4a; }
+  .config-card .input-row { display: flex; gap: 8px; align-items: center; }
+  .config-card input[type="text"] {
+    flex: 1; padding: 8px 12px; border: 1px solid #d4c9b5; border-radius: 6px;
+    font-size: 13px; font-family: "Cascadia Code", "Fira Code", monospace;
+    background: #fafaf8; color: #2c2416;
+  }
+  .config-card input[type="text"]:focus { outline: none; border-color: #e2b96f; box-shadow: 0 0 0 3px rgba(226,185,111,0.15); }
+  .config-card input[type="file"] { display: none; }
+  .btn-sm {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 7px 14px; border: 1px solid #d4c9b5; border-radius: 6px;
+    font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+    background: #fff; color: #4a3f2f; transition: all 0.15s;
+  }
+  .btn-sm:hover { background: #fafaf8; border-color: #b8a88c; }
+
+  /* Preview box */
+  .preview-box {
+    width: 100%; height: 160px; border: 2px dashed #d4c9b5; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fafaf8; overflow: hidden; position: relative;
+  }
+  .preview-box img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+  }
+  .preview-placeholder {
+    color: #bfb09a; font-size: 13px; text-align: center; line-height: 1.5;
+  }
+
+  /* Scene grid */
+  .scene-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 24px;
+  }
+  @media (max-width: 1100px) { .scene-grid { grid-template-columns: 1fr; } }
+
+  .scene-card {
+    background: #fff; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e8e1d7;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .scene-card.active { border-color: #e2b96f; box-shadow: 0 2px 12px rgba(226,185,111,0.2); }
+  .scene-card-header {
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    background: #fafaf8; border-bottom: 1px solid #eee8da;
+  }
+  .scene-card-header .scene-name { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+  .scene-card-header .scene-label {
+    font-size: 11px; color: #8b7355; background: #f5f0eb;
+    padding: 2px 8px; border-radius: 10px;
+  }
+  .scene-card-body { padding: 16px 20px; }
+  .scene-card-body textarea {
+    width: 100%; height: 260px; padding: 10px 12px;
+    border: 1px solid #d4c9b5; border-radius: 6px;
+    font-size: 12px; line-height: 1.6; resize: vertical;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #fafaf8; color: #2c2416;
+  }
+  .scene-card-body textarea:focus { outline: none; border-color: #e2b96f; box-shadow: 0 0 0 3px rgba(226,185,111,0.15); }
+  .scene-card-footer {
+    padding: 12px 20px; border-top: 1px solid #f0ebe0;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .count-control { display: flex; align-items: center; gap: 6px; }
+  .count-control label { font-size: 12px; font-weight: 600; color: #6b5e4a; white-space: nowrap; }
+  .count-control input[type="number"] {
+    width: 52px; padding: 5px 6px; text-align: center;
+    border: 1px solid #d4c9b5; border-radius: 6px;
+    font-size: 13px; font-family: inherit; background: #fafaf8;
+  }
+  .count-control input[type="number"]:focus { outline: none; border-color: #e2b96f; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #e2b96f 0%, #c9973a 100%);
+    color: #1a1a2e; box-shadow: 0 2px 8px rgba(226,185,111,0.35);
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(226,185,111,0.45); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-reset {
+    background: #fff; color: #6b5e4a; border: 1px solid #d4c9b5;
+  }
+  .btn-reset:hover { background: #fafaf8; }
+
+  .actions { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+
+  /* Progress panel */
+  .progress-panel {
+    background: #fff; border-radius: 10px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e8e1d7;
+    margin-bottom: 24px; display: none;
+  }
+  .progress-panel.visible { display: block; }
+  .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .progress-header .label { font-size: 16px; font-weight: 700; }
+  .progress-bar-bg { height: 8px; background: #f0ebe0; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #e2b96f, #c9973a); border-radius: 4px; transition: width 0.3s; }
+  .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .task-chip {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-radius: 8px; font-size: 13px; border: 1px solid #e8e1d7;
+  }
+  .task-chip.pending { background: #fafaf8; color: #8b7355; }
+  .task-chip.running { background: #fef9f0; color: #8b6914; border-color: #f5d78c; }
+  .task-chip.done { background: #f2faf0; color: #2d6a1e; border-color: #b8e0a8; }
+  .task-chip.failed { background: #fef5f5; color: #a82323; border-color: #f5c0c0; }
+  .task-chip .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .task-chip.pending .dot { background: #ccc; }
+  .task-chip.running .dot { background: #f0b90b; animation: pulse 1s infinite; }
+  .task-chip.done .dot { background: #4caf50; }
+  .task-chip.failed .dot { background: #e53935; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .task-chip .task-scene { font-weight: 600; }
+  .task-chip .task-status { margin-left: auto; font-size: 11px; opacity: 0.7; }
+  .task-chip .task-link { font-size: 11px; color: #0f3460; text-decoration: underline; cursor: pointer; }
+
+  .error-toast {
+    position: fixed; top: 20px; right: 20px; background: #a82323; color: #fff;
+    padding: 12px 20px; border-radius: 8px; font-size: 13px; z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2); display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TKBGC 素材生成</h1>
+  <span class="badge">CreatOK + 飞书</span>
+</div>
+
+<div class="container">
+
+  <div class="section-title">配置</div>
+  <div class="config-row">
+    <div class="config-card">
+      <label>参考图</label>
+      <div class="input-row">
+        <input type="text" id="refImage" value="C:\Users\YANXUN\Pictures\Saved Pictures\tk_video (20).png" placeholder="参考图绝对路径（请使用纯英文路径）">
+        <button class="btn-sm" onclick="pickRefFile()">选择文件</button>
+        <button class="btn-sm" onclick="document.getElementById('refFileUpload').click()" title="浏览器上传（备选）">上传</button>
+        <input type="file" id="refFileUpload" accept="image/png,image/jpeg,image/webp" onchange="onRefFileUpload()" style="display:none">
+      </div>
+      <div style="font-size:11px;color:#c9973a;margin-top:2px;">请使用纯英文路径，中文路径会导致生成失败</div>
+      <div class="preview-box" id="refPreviewBox">
+        <span class="preview-placeholder" id="refPreviewPlaceholder">参考图预览<br>选择文件后显示</span>
+        <img id="refPreviewImg" src="" alt="参考图预览" style="display:none" onerror="onPreviewError()">
+      </div>
+    </div>
+    <div class="config-card">
+      <label>图片输出目录</label>
+      <div class="input-row">
+        <input type="text" id="outputDir" value="C:\Users\YANXUN\Pictures" placeholder="输出目录（请使用纯英文路径）">
+        <button class="btn-sm" id="btnPickFolder" onclick="pickFolder()">选择文件夹</button>
+      </div>
+      <div style="font-size:11px;color:#c9973a;margin-top:4px;" id="folderHint">请使用纯英文路径，中文路径会导致生成失败</div>
+    </div>
+  </div>
+
+  <div class="section-title">场景提示词 <span style="font-weight:400;color:#999;font-size:12px;text-transform:none;">— 三个场景可独立编辑、开关、设置张数</span></div>
+  <div class="scene-grid" id="sceneGrid"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btnGenerate" onclick="startGeneration()">生成全部</button>
+    <button class="btn btn-reset" onclick="resetAll()">重置默认</button>
+    <span id="statusSummary" style="font-size:13px;color:#6b5e4a;"></span>
+  </div>
+
+  <div class="progress-panel" id="progressPanel">
+    <div class="progress-header">
+      <span class="label" id="progressLabel">进度</span>
+      <span style="font-size:13px;color:#6b5e4a;" id="progressText"></span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+    <div class="task-grid" id="taskGrid"></div>
+  </div>
+
+</div>
+
+<div class="error-toast" id="errorToast"></div>
+
+<script>
+let pollTimer = null;
+let currentJobId = null;
+
+const SCENES = [
+  {
+    name: '窗边晨光', label: 'A',
+    bg: '美式现代起居室，清晨柔和暖光从百叶窗缝隙洒入，画面右侧隐约可见浅色亚麻沙发局部，左侧角落放置一只琥珀色玻璃花瓶+干枝，中远景为浅灰墙面+原木色边柜，地面铺米色编织地毯，整体色调偏暖奶油色，景深自然而浅，焦点始终在手和产品上。',
+    count: 1
+  },
+  {
+    name: '大理石台面', label: 'B',
+    bg: '美式开放式厨房中岛，白色大理石台面纹理细腻，产品与手部位于台面前方，背景远处可见浅木色橱柜面板+复古黄铜拉手，台面角落摆放一支细颈陶瓶+单枝尤加利叶柔化画面，右侧窗光漫入，整体干净温暖但非商业棚感。',
+    count: 1
+  },
+  {
+    name: '壁炉角落', label: 'C',
+    bg: '美式客厅壁炉旁的胡桃木边桌上，背景隐约可见奶油色护墙板线条+壁炉石材纹理，桌面散落极简的金属烛台+一本翻开的亚麻色书籍，光线来自侧方窗户，暖调柔光，氛围感强但不抢眼。',
+    count: 1
+  }
+];
+
+const NEGATIVE_PROMPT = '人脸、身体、其他人物、透视畸变、产品变形 / 结构修改 / 颜色变化 / 材质改变、气泡流动 / 漂浮、小夜灯点亮发光 / LED 亮起、额外电线 / USB 线 / 充电器 / 充电座 / 底座、产品自带插头被修改或移除、金属环变亮面抛光、亚克力变磨砂 / 雾面、过度装饰、硬光 / 影棚光 / 闪光灯、纯白背景 / 灰色背景、CG 感 / 3D 渲染 / 卡通、模糊 / 低分辨率、产品比例失调、手部畸形 / 手指异常、光影杂乱、抢镜背景元素、文字 / 水印 / logo、电线 / 电源线 / 任何线缆';
+
+const PROMPT_TEMPLATE = '竖屏 9:16，电商产品摄影，超近距离特写，iPhone 风格生活照。画面主体为一双优雅美式现代女性手部自然握持一盏插电式小夜灯，无任何人脸、身体或其他人物部位。\n\n产品还原（严格锁定参考图）：\n小夜灯与参考图完全一致——造型、结构、材质、颜色、比例、尺寸、表面纹理、透明度、气泡分布、金属件色泽、自带黑色美规电源插头，所有产品细节 100% 保留，不做任何修改、替换或美化。产品处于完全未点亮状态，不发光，仅依靠材质自身反射环境光。\n\n手部与动作（可变化）：\n手部换一个自然放松的握持姿态（如单手托底、指尖轻握侧面、双手捧握等），动作轻柔优雅，手指线条舒展自然；佩戴极简轻奢金属戒指 / 细手链，欧美款美甲（裸色 / 奶白 / 法式）。\n\n背景（必须与参考图不同）：\n{sceneBg}\n\n画质：超写实，细节锐利清晰，真实材质还原（亚克力通透折射、金属拉丝哑光纹理、皮肤质感），无透视畸变，无过度锐化 / HDR 感，色彩真实自然，手机直出感。';
+
+// ── Reference image: native file dialog + preview ────────
+function updateRefPreview(src) {
+  const img = document.getElementById('refPreviewImg');
+  const placeholder = document.getElementById('refPreviewPlaceholder');
+  img.style.display = 'none';
+  placeholder.style.display = 'block';
+  if (src) {
+    img.src = src;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  }
+}
+
+function onPreviewError() {
+  document.getElementById('refPreviewImg').style.display = 'none';
+  document.getElementById('refPreviewPlaceholder').style.display = 'block';
+  document.getElementById('refPreviewPlaceholder').textContent = '预览加载失败';
+}
+
+// Native file dialog via server (returns full path)
+async function pickRefFile() {
+  try {
+    document.getElementById('folderHint').textContent = '正在打开文件选择器...';
+    const resp = await fetch('/api/pick-file', { method: 'POST' });
+    const data = await resp.json();
+    document.getElementById('folderHint').textContent = '';
+    if (data.cancelled) return;
+    if (data.error) { showError(data.error); return; }
+    document.getElementById('refImage').value = data.path;
+    loadPreviewFromPath(data.path);
+  } catch (err) {
+    document.getElementById('folderHint').textContent = '';
+    showError('文件选择失败: ' + err.message);
+  }
+}
+
+// Browser upload fallback (no full path available, uploads to server temp)
+async function onRefFileUpload() {
+  const file = document.getElementById('refFileUpload').files[0];
+  if (!file) return;
+  // Show preview immediately
+  const reader = new FileReader();
+  reader.onload = function(e) { updateRefPreview(e.target.result); };
+  reader.readAsDataURL(file);
+  // Upload to server, get saved path
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    document.getElementById('folderHint').textContent = '正在上传参考图...';
+    const resp = await fetch('/api/upload-ref', { method: 'POST', body: formData });
+    const data = await resp.json();
+    document.getElementById('folderHint').textContent = '';
+    if (data.error) { showError(data.error); return; }
+    document.getElementById('refImage').value = data.path;
+  } catch (err) {
+    document.getElementById('folderHint').textContent = '';
+    showError('上传失败: ' + err.message);
+  }
+}
+
+function loadPreviewFromPath(filePath) {
+  if (!filePath) return;
+  updateRefPreview('/api/preview-ref?path=' + encodeURIComponent(filePath));
+}
+
+async function loadDefaultPreview() {
+  const p = document.getElementById('refImage').value.trim();
+  if (p) loadPreviewFromPath(p);
+}
+setTimeout(loadDefaultPreview, 300);
+
+// ── Folder picker via server native dialog ───────────────
+async function pickFolder() {
+  try {
+    document.getElementById('folderHint').textContent = '正在打开文件夹选择器...';
+    const resp = await fetch('/api/pick-folder', { method: 'POST' });
+    const data = await resp.json();
+    document.getElementById('folderHint').textContent = '';
+    if (data.cancelled) return;
+    if (data.error) { showError(data.error); return; }
+    document.getElementById('outputDir').value = data.path;
+    document.getElementById('folderHint').textContent = '已选择: ' + data.path;
+    setTimeout(() => { document.getElementById('folderHint').textContent = ''; }, 3000);
+  } catch (err) {
+    document.getElementById('folderHint').textContent = '';
+    showError('文件夹选择失败: ' + err.message);
+  }
+}
+
+// ── Scene cards ──────────────────────────────────────────
+function buildSceneCard(scene, idx) {
+  return `
+    <div class="scene-card active" id="sceneCard${idx}">
+      <div class="scene-card-header">
+        <span class="scene-name">${scene.name}</span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#6b5e4a;">
+          <input type="checkbox" checked id="sceneToggle${idx}" onchange="toggleScene(${idx})"> 启用
+        </label>
+      </div>
+      <div class="scene-card-body">
+        <textarea id="scenePrompt${idx}">${escapeHtml(PROMPT_TEMPLATE.replace('{sceneBg}', scene.bg))}</textarea>
+      </div>
+      <div class="scene-card-footer">
+        <div class="count-control">
+          <label>生成张数:</label>
+          <input type="number" id="sceneCount${idx}" value="${scene.count}" min="1" max="10" onchange="validateCount(${idx})">
+        </div>
+        <span class="scene-label">场景 ${scene.label}</span>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderScenes() {
+  document.getElementById('sceneGrid').innerHTML = SCENES.map((s, i) => buildSceneCard(s, i)).join('');
+}
+
+function toggleScene(idx) {
+  const card = document.getElementById('sceneCard'+idx);
+  const toggle = document.getElementById('sceneToggle'+idx);
+  card.classList.toggle('active', toggle.checked);
+}
+
+function validateCount(idx) {
+  const el = document.getElementById('sceneCount'+idx);
+  let v = parseInt(el.value);
+  if (isNaN(v) || v < 1) v = 1;
+  if (v > 10) v = 10;
+  el.value = v;
+}
+
+function resetAll() {
+  SCENES.forEach((scene, i) => {
+    document.getElementById('scenePrompt'+i).value = PROMPT_TEMPLATE.replace('{sceneBg}', scene.bg);
+    document.getElementById('sceneCount'+i).value = 1;
+    document.getElementById('sceneToggle'+i).checked = true;
+    document.getElementById('sceneCard'+i).classList.add('active');
+  });
+  document.getElementById('refImage').value = 'C:\\Users\\YANXUN\\Pictures\\tk_video (20).png';
+  document.getElementById('refFileUpload').value = '';
+  document.getElementById('outputDir').value = 'C:\\Users\\YANXUN\\Pictures';
+  loadDefaultPreview();
+}
+
+// ── API ──────────────────────────────────────────────────
+async function startGeneration() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+  const scenes = [];
+  SCENES.forEach((scene, i) => {
+    if (!document.getElementById('sceneToggle'+i).checked) return;
+    const count = parseInt(document.getElementById('sceneCount'+i).value) || 1;
+    const prompt = document.getElementById('scenePrompt'+i).value.trim();
+    if (!prompt) return;
+    scenes.push({ name: scene.name, prompt: prompt + '\n\n' + NEGATIVE_PROMPT, count: Math.min(10, Math.max(1, count)) });
+  });
+
+  if (scenes.length === 0) { showError('请至少启用一个场景并填写提示词'); return; }
+
+  const refImage = document.getElementById('refImage').value.trim();
+  if (!refImage) { showError('请填写参考图路径'); return; }
+
+  const outputDir = document.getElementById('outputDir').value.trim() || 'C:\\Users\\YANXUN\\Pictures';
+
+  document.getElementById('btnGenerate').disabled = true;
+  document.getElementById('btnGenerate').textContent = '提交中...';
+  document.getElementById('progressPanel').classList.add('visible');
+  document.getElementById('progressLabel').textContent = '正在提交任务...';
+  document.getElementById('progressText').textContent = '';
+  document.getElementById('taskGrid').innerHTML = '';
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenes, referenceImage: refImage, outputDir })
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); resetGenerateBtn(); return; }
+
+    currentJobId = data.jobId;
+    document.getElementById('statusSummary').textContent = `任务 ${data.jobId} · ${data.totalTasks} 张图片`;
+    document.getElementById('btnGenerate').textContent = '生成中...';
+
+    pollTimer = setInterval(pollJobStatus, 2000);
+    pollJobStatus();
+  } catch (err) {
+    showError('请求失败: ' + err.message);
+    resetGenerateBtn();
+  }
+}
+
+function resetGenerateBtn() {
+  document.getElementById('btnGenerate').disabled = false;
+  document.getElementById('btnGenerate').textContent = '生成全部';
+}
+
+async function pollJobStatus() {
+  if (!currentJobId) return;
+  try {
+    const resp = await fetch('/api/jobs/' + currentJobId);
+    const job = await resp.json();
+    updateProgress(job);
+
+    if (job.status === 'done' || job.status === 'failed' || job.status === 'partial') {
+      clearInterval(pollTimer);
+      pollTimer = null;
+      resetGenerateBtn();
+      document.getElementById('statusSummary').textContent =
+        `完成 ${job.completedCount}/${job.totalCount}` + (job.failedCount > 0 ? ` · 失败 ${job.failedCount}` : '');
+    }
+  } catch (err) { /* retry next poll */ }
+}
+
+function updateProgress(job) {
+  const pct = job.totalCount > 0 ? Math.round((job.completedCount + job.failedCount) / job.totalCount * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent =
+    job.status === 'done' ? '全部完成' :
+    job.status === 'partial' ? '部分完成' :
+    job.status === 'failed' ? '全部失败' : '生成中';
+  document.getElementById('progressText').textContent = `${job.completedCount + job.failedCount}/${job.totalCount} (成功 ${job.completedCount} · 失败 ${job.failedCount})`;
+
+  document.getElementById('taskGrid').innerHTML = job.tasks.map(t => {
+    const cls = t.status === 'done' ? 'done' : t.status === 'failed' ? 'failed' :
+                t.status === 'pending' ? 'pending' : 'running';
+    const statusText = {
+      done: '已上传飞书', failed: '失败', pending: '等待中', running: '生成中',
+      downloading: '下载中', uploading_feishu: '上传飞书', uploading_ref: '上传参考图',
+      submitted: '已提交'
+    }[t.status] || t.status;
+    const localLink = t.localPath ? `<a href="/api/serve-local?path=${encodeURIComponent(t.localPath)}" target="_blank" class="task-link" title="${t.localPath}">本地</a>` : '';
+    return `
+      <div class="task-chip ${cls}">
+        <span class="dot"></span>
+        <span class="task-scene">${t.sceneName} #${t.id.split('-').pop()}</span>
+        <span class="task-status">${statusText}</span>
+        ${t.error ? `<span style="font-size:11px;color:inherit;opacity:0.7;" title="${escapeHtml(t.error)}">⚠</span>` : ''}
+        ${localLink}
+      </div>`;
+  }).join('');
+}
+
+function showError(msg) {
+  const toast = document.getElementById('errorToast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 5000);
+}
+
+// ── Startup ──────────────────────────────────────────────
+renderScenes();
+</script>
+</body>
+</html>
